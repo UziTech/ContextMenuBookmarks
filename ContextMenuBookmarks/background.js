@@ -1,7 +1,7 @@
 // Traverse the bookmark tree, and print the folder and nodes.
 chrome.refreshingBookmarks = false;
-function refreshContextBookmarks() {
-	if(!chrome.refreshingBookmarks){
+function refreshContextBookmarks(id, info) {
+	if (!chrome.refreshingBookmarks) {
 		chrome.refreshingBookmarks = true;
 		chrome.contextMenus.remove("bookmarks");
 		contextBookmarks();
@@ -19,6 +19,24 @@ function contextBookmarks() {
 		for (var i = 0; i < bookmarkTreeNodes.length; i++) {
 			contextNode(bookmarkTreeNodes[i], parent);
 		}
+		chrome.contextMenus.create({
+			"title": "Manage Bookmarks",
+			"id": "manage",
+			"parentId": parent,
+			"contexts": ["all"],
+			"onclick": function (info, tab) {
+				openBookmark(info, tab, "chrome://bookmarks");
+			}
+		});
+		chrome.contextMenus.create({
+			"title": "Refresh",
+			"id": "refresh",
+			"parentId": parent,
+			"contexts": ["all"],
+			"onclick": function (info, tab) {
+				refreshContextBookmarks("refresh", info);
+			}
+		});
 	});
 }
 
@@ -28,6 +46,7 @@ function contextNode(bookmarkNode, parent) {
 		if (bookmarkNode.title) {
 			folder = chrome.contextMenus.create({
 				"title": bookmarkNode.title,
+				"id": bookmarkNode.id,
 				"parentId": parent,
 				"contexts": ["all"]
 			});
@@ -40,9 +59,10 @@ function contextNode(bookmarkNode, parent) {
 		if (url.indexOf("javascript:") !== 0) {
 			chrome.contextMenus.create({
 				"title": bookmarkNode.title,
+				"id": bookmarkNode.id,
 				"parentId": parent,
-				"onclick": function () {
-					chrome.tabs.create({"url": url});
+				"onclick": function (info, tab) {
+					openBookmark(info, tab, url);
 				},
 				"contexts": ["all"]
 			});
@@ -50,16 +70,29 @@ function contextNode(bookmarkNode, parent) {
 			var code = url.substring(11);
 			chrome.contextMenus.create({
 				"title": "JS: " + bookmarkNode.title,
+				"id": bookmarkNode.id,
 				"parentId": parent,
-				"onclick": function () {
-					chrome.tabs.executeScript({
-						code: code
-					});
+				"onclick": function (info, tab) {
+					executeBookmarklet(info, tab, code);
 				},
 				"contexts": ["all"]
 			});
 		}
 	}
+}
+
+function executeBookmarklet(info, tab, code) {
+	if (tab.url.indexOf("chrome://") === 0) {
+		alert("Cannot execute script on 'chrome://' pages.");
+	} else {
+		chrome.tabs.executeScript({
+			code: code
+		});
+	}
+}
+
+function openBookmark(info, tab, url) {
+	chrome.tabs.create({"url": url});
 }
 
 contextBookmarks();

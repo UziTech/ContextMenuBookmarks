@@ -1,7 +1,8 @@
 {
   "name": "Context Menu Bookmarks",
-  "version": "1.0",
-  "description": "Show bookmarks in context menu",
+	"short_name": "Ctx Bookmarks",
+  "version": "1.1.1",
+  "description": "Use bookmarks and bookmarklets from the context menu.",
 	"icons": {
 		"16": "icon_16.png",
 		"48": "icon_48.png",
