@@ -1,0 +1,19 @@
+{
+  "name": "Context Menu Bookmarks",
+  "version": "1.0",
+  "description": "Show bookmarks in context menu",
+	"icons": {
+		"16": "icon_16.png",
+		"48": "icon_48.png",
+		"128": "icon_128.png"
+	},
+	"background": {
+    "scripts": ["background.js"]
+  },
+  "permissions": [
+    "bookmarks",
+		"contextMenus",
+		"activeTab"
+  ],
+  "manifest_version": 2
+}
