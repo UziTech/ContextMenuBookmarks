@@ -1,24 +1,24 @@
 // Traverse the bookmark tree, and print the folder and nodes.
-chrome.refreshingBookmarks = false;
 function refreshContextBookmarks(id, info) {
-	if (!chrome.refreshingBookmarks) {
-		chrome.refreshingBookmarks = true;
-		chrome.contextMenus.remove("bookmarks");
-		contextBookmarks();
-		chrome.refreshingBookmarks = false;
-	}
+	chrome.contextMenus.removeAll();
+	contextBookmarks();
 }
 
 function contextBookmarks() {
 	chrome.bookmarks.getTree(function (bookmarkTreeNodes) {
 		var parent = chrome.contextMenus.create({
 			"title": "Bookmarks",
-			"id": "bookmarks",
+			"id": "1",
 			"contexts": ["all"]
 		});
 		for (var i = 0; i < bookmarkTreeNodes.length; i++) {
 			contextNode(bookmarkTreeNodes[i], parent);
 		}
+		chrome.contextMenus.create({
+			"type": "separator",
+			"parentId": parent,
+			"contexts": ["all"]
+		});
 		chrome.contextMenus.create({
 			"title": "Manage Bookmarks",
 			"id": "manage",
@@ -43,7 +43,7 @@ function contextBookmarks() {
 function contextNode(bookmarkNode, parent) {
 	if (bookmarkNode.children && bookmarkNode.children.length > 0) {
 		var folder = parent;
-		if (bookmarkNode.title) {
+		if (bookmarkNode.title && bookmarkNode.id !== "1") {
 			folder = chrome.contextMenus.create({
 				"title": bookmarkNode.title,
 				"id": bookmarkNode.id,
@@ -53,6 +53,27 @@ function contextNode(bookmarkNode, parent) {
 		}
 		for (var i = 0; i < bookmarkNode.children.length; i++) {
 			contextNode(bookmarkNode.children[i], folder);
+		}
+		chrome.contextMenus.create({
+			"type": "separator",
+			"parentId": folder,
+			"contexts": ["link"]
+		});
+		chrome.contextMenus.create({
+			"title": "Add Bookmark",
+			"id": folder + "ADD",
+			"parentId": folder,
+			"onclick": function (info, tab) {
+				addBookmark(info, tab);
+			},
+			"contexts": ["link"]
+		});
+		if (bookmarkNode.id === "1") {
+			chrome.contextMenus.create({
+				"type": "separator",
+				"parentId": folder,
+				"contexts": ["all"]
+			});
 		}
 	} else if (bookmarkNode.title && bookmarkNode.url) {
 		var url = bookmarkNode.url;
@@ -69,7 +90,7 @@ function contextNode(bookmarkNode, parent) {
 		} else {
 			var code = url.substring(11);
 			chrome.contextMenus.create({
-				"title": "JS: " + bookmarkNode.title,
+				"title": bookmarkNode.title,
 				"id": bookmarkNode.id,
 				"parentId": parent,
 				"onclick": function (info, tab) {
@@ -93,6 +114,15 @@ function executeBookmarklet(info, tab, code) {
 
 function openBookmark(info, tab, url) {
 	chrome.tabs.create({"url": url});
+}
+
+function addBookmark(info, tab) {
+	var title = prompt("Bookmark Name:", info.linkUrl);
+	chrome.bookmarks.create({
+		"parentId": info.parentMenuItemId,
+		"title": title ? title : info.linkUrl,
+		"url": info.linkUrl
+	});
 }
 
 contextBookmarks();
