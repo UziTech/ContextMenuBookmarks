@@ -54,20 +54,22 @@ function contextNode(bookmarkNode, parent) {
 		for (var i = 0; i < bookmarkNode.children.length; i++) {
 			contextNode(bookmarkNode.children[i], folder);
 		}
-		chrome.contextMenus.create({
-			"type": "separator",
-			"parentId": folder,
-			"contexts": ["link"]
-		});
-		chrome.contextMenus.create({
-			"title": "Add Bookmark",
-			"id": folder + "ADD",
-			"parentId": folder,
-			"onclick": function (info, tab) {
-				addBookmark(info, tab);
-			},
-			"contexts": ["link"]
-		});
+		if(bookmarkNode.id !== "0"){
+			chrome.contextMenus.create({
+				"type": "separator",
+				"parentId": folder,
+				"contexts": ["page", "link", "selection"]
+			});
+			chrome.contextMenus.create({
+				"title": "Add Bookmark",
+				"id": folder + bookmarkNode.id + "ADD",
+				"parentId": folder,
+				"onclick": function (info, tab) {
+					addBookmark(info, tab);
+				},
+				"contexts": ["page", "link", "selection"]
+			});
+		}
 		if (bookmarkNode.id === "1") {
 			chrome.contextMenus.create({
 				"type": "separator",
@@ -117,12 +119,15 @@ function openBookmark(info, tab, url) {
 }
 
 function addBookmark(info, tab) {
-	var title = prompt("Bookmark Name:", info.linkUrl);
-	chrome.bookmarks.create({
-		"parentId": info.parentMenuItemId,
-		"title": title ? title : info.linkUrl,
-		"url": info.linkUrl
-	});
+	var link = info.selectionText || info.linkUrl || info.pageUrl;
+	var title = prompt("Bookmark Name:", link);
+	if(title){
+		chrome.bookmarks.create({
+			"parentId": info.parentMenuItemId,
+			"title": title,
+			"url": link
+		});
+	}
 }
 
 contextBookmarks();
